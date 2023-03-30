@@ -10,16 +10,16 @@ router.get("/", async (req, res) => {
     let perPage = req.query.perPage ? Math.min(req.query.perPage, 10) : 5;
     //http://localhost:3001/videos?page=1
     let page = req.query.page - 1 || 0;
-    //http://localhost:3001/videos?perPage=5&sort=price
-    let sort = req.query.sort || "price";
-    //http://localhost:3001/videos?sort=price&reverse=yes
+    //http://localhost:3001/videos?perPage=5&sort=date_created
+    let sort = req.query.sort || "date_created";
+    //http://localhost:3001/videos?sort=date_created&reverse=yes
     let reverse = req.query.reverse == "yes" ? 1 : -1;
     try {
         let data = await VideoModel
-            .find({}) // filter by price range
+            .find({}) // filter by date_created range
             .limit(perPage) // limits of videos per page
             .skip(page * perPage) // skips of videos per page
-            .sort({ [sort]: reverse }); // sorts by price
+            .sort({ [sort]: reverse }); // sorts by date_created
         res.json(data);
     } catch (err) {
         console.log(err);
@@ -64,7 +64,15 @@ router.put("/:id", auth, async (req, res) => {
     }
     try {
         let id = req.params.id;
-        let data = await VideoModel.updateOne({ _id: id, user_id: req.tokenData._id }, req.body);
+        let data;
+        // בודק אם המשתמש הוא אדמין ונותן לו אפשרות לערוך את
+        // כל הרשומות גם כאלו שלא שלו
+        if (req.tokenData.role == "admin") {
+            data = await VideoModel.updateOne({ _id: id }, req.body);
+        }
+        else {
+            data = await VideoModel.updateOne({ _id: id, user_id: req.tokenData._id }, req.body);
+        }
         res.json(data)
     }
     catch (err) {
@@ -76,7 +84,13 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
     try {
         let id = req.params.id;
-        let data = await VideoModel.deleteOne({ _id: id, user_id: req.tokenData._id });
+        let data;
+        if (req.tokenData.role == "admin") {
+            data = await VideoModel.deleteOne({ _id: id });
+        }
+        else {
+            data = await VideoModel.deleteOne({ _id: id, user_id: req.tokenData._id });
+        }
         res.json(data)
     }
     catch (err) {

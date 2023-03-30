@@ -24,6 +24,23 @@ router.get("/userInfo", auth, async (req, res) => {
   // res.json({msg:"token is good",tokenData:req.tokenData})
 })
 
+router.get("/usersList", authAdmin, async (req, res) => {
+  try {
+    let perPage = req.query.perPage || 5;
+    let page = req.query.page - 1 || 0;
+    let data = await UserModel
+      .find({}, { password: 0 })
+      .limit(perPage)
+      .skip(page * perPage)
+      .sort({ _id: -1 })
+    res.json(data)
+  }
+  catch (err) {
+    console.log(err);
+    res.status(502).json({ err })
+  }
+})
+
 
 router.post("/", async (req, res) => {
   let validBody = validateJoi(req.body);
@@ -94,6 +111,21 @@ router.patch("/changeRole/:id/:role", authAdmin, async (req, res) => {
     res.status(502).json({ err });
   }
 
+})
+
+router.delete("/:id", authAdmin, async (req, res) => {
+  try {
+    let id = req.params.id;
+    if (id == req.tokenData._id || id == "64229838a6698347683dfd9b") {
+      return res.status(401).json({ err: "You cant delete yourself or the super admin" });
+    }
+    let data = await UserModel.deleteOne({ _id: id });
+    res.json(data)
+  }
+  catch (err) {
+    console.log(err);
+    res.status(502).json({ err })
+  }
 })
 
 module.exports = router;

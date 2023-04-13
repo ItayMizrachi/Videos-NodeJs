@@ -10,6 +10,10 @@ router.get("/", async (req, res) => {
   res.json({ msg: "Users endpoint" });
 })
 
+// ראוט שבודק את הטוקן בלי להפעיל את המסד
+router.get("/checkToken", auth, async (req, res) => {
+  res.json({ _id: req.tokenData._id, role: req.tokenData.role })
+})
 
 // auth -> פונקציית מידל וואר שפועלת לפני הפונקציה הראשית של הראוטר
 router.get("/userInfo", auth, async (req, res) => {

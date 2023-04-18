@@ -4,29 +4,56 @@ const { VideoModel, validateVideo } = require("../models/videoModel");
 const router = express.Router();
 
 
-router.get("/", async (req, res) => {
-    //http://localhost:3001/videos?page=3&perPage=5
-    //http://localhost:3001/videos?perPage=10
-    let perPage = req.query.perPage ? Math.min(req.query.perPage, 10) : 5;
-    //http://localhost:3001/videos?page=1
-    let page = req.query.page - 1 || 0;
-    //http://localhost:3001/videos?perPage=5&sort=date_created
-    let sort = req.query.sort || "date_created";
-    //http://localhost:3001/videos?sort=date_created&reverse=yes
-    let reverse = req.query.reverse == "yes" ? 1 : -1;
-    try {
-        let data = await VideoModel
-            .find({}) // filter by date_created range
-            .limit(perPage) // limits of videos per page
-            .skip(page * perPage) // skips of videos per page
-            .sort({ [sort]: reverse }); // sorts by date_created
-        res.json(data);
-    } catch (err) {
-        console.log(err);
-        res.status(502).json({ err });
-    }
-});
+// router.get("/", async (req, res) => {
+//     //http://localhost:3001/videos?page=3&perPage=5
+//     //http://localhost:3001/videos?perPage=10
+//     let perPage = req.query.perPage ? Math.min(req.query.perPage, 10) : 5;
+//     //http://localhost:3001/videos?page=1
+//     let page = req.query.page - 1 || 0;
+//     //http://localhost:3001/videos?perPage=5&sort=date_created
+//     let sort = req.query.sort || "date_created";
+//     //http://localhost:3001/videos?sort=date_created&reverse=yes
+//     let reverse = req.query.reverse == "yes" ? 1 : -1;
+//     try {
+//         let data = await VideoModel
+//             .find({}) // filter by date_created range
+//             .limit(perPage) // limits of videos per page
+//             .skip(page * perPage) // skips of videos per page
+//             .sort({ [sort]: reverse }); // sorts by date_created
+//         res.json(data);
+//     } catch (err) {
+//         console.log(err);
+//         res.status(502).json({ err });
+//     }
+// });
 
+
+router.get("/", async (req, res) => {
+    const perPage = req.query.perPage || 5;
+    const page = req.query.page - 1 || 0;
+    const sort = req.query.sort || "_id";
+    const reverse = req.query.reverse == "yes" ? 1 : -1;
+    const category = req.query.category;
+
+    try {
+        let filterFind = {}
+        // בודק אם קיבלנו קווארי של קטגוריה ואם כן משנה את הפליטר של הפיינד
+        // למציאת פריטים שקשורים לקגטוריה
+        if (category) {
+            filterFind = { category_code: category }
+        }
+        let data = await VideoModel
+            .find(filterFind)
+            .limit(perPage)
+            .skip(page * perPage)
+            .sort({ [sort]: reverse })
+        res.json(data);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(502).json({ err })
+    }
+})
 
 router.get("/single/:id", async (req, res) => {
     try {
